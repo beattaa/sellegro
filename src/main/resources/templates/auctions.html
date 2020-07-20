@@ -41,7 +41,9 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="car: ${cars}">
+        <tr th:each="car, iStat: ${auctionPage.content}"
+            th:style="${iStat.odd}? 'font-weight: bold;'"
+            th:alt-title="${iStat.even}? 'even' : 'odd'">
             <td th:text="${car.title}"></td>
             <td th:text="|${car.price} zł|"></td>
             <td th:text="${car.color}"></td>
@@ -49,7 +51,12 @@
         </tr>
         </tbody>
     </table>
-
+    <div style="float:left; margin:10px" th:if="${auctionPage.totalPages > 0}" class="pagination"
+            th:each="pageNumber : ${pageNumbers}">
+        <a th:href="@{/auctions(size=${auctionPage.size}, page=${pageNumber})}"
+                th:text=${pageNumber}
+                th:class="${pageNumber==auctionPage.number + 1} ? active"></a>
+    </div>
 
 </div>
 </body>
