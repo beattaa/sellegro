@@ -1,7 +1,6 @@
 package pl.javastart.sellegro.auction;
 
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,17 +50,7 @@ public class AuctionService {
     }
 
     public List<Auction> findAllForFilters(AuctionFilters auctionFilters) {
-        if (!StringUtils.isEmpty(auctionFilters.getTitle())) {
-            return auctionRepository.findAllByTitleContainingIgnoreCase(auctionFilters.getTitle());
-        } else if (!StringUtils.isEmpty(auctionFilters.getCarMaker())) {
-            return auctionRepository.findAllByCarMakeContainingIgnoreCase(auctionFilters.getCarMaker());
-        } else if (!StringUtils.isEmpty(auctionFilters.getCarModel())) {
-            return auctionRepository.findAllByCarModelContainingIgnoreCase(auctionFilters.getCarModel());
-        } else if (!StringUtils.isEmpty(auctionFilters.getColor())) {
-            return auctionRepository.findAllByColorContainingIgnoreCase(auctionFilters.getColor());
-        } else {
-            return auctionRepository.findAllBy();
-        }
+        return auctionRepository.findAuctionByMultipleParams(auctionFilters.getTitle(), auctionFilters.getCarMaker(), auctionFilters.getCarModel(), auctionFilters.getColor());
     }
 
     public List<Auction> findAllSorted(String sort) {
