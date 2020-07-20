@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
-    @Query("SELECT a FROM Auction a WHERE (:title is null or a.title = :title) and (:carMake is null or a.carMake = :carMake) and (:carModel is null or a.carModel = :carModel) and (:color is null or a.color = :color)")
+    @Query("SELECT a FROM Auction a WHERE (:title='' or a.title = :title) and (:carMake='' or a.carMake = :carMake) and (:carModel='' or a.carModel = :carModel) and (:color='' or a.color = :color)")
     List<Auction> findAuctionByMultipleParams(@Param("title") String title, @Param("carMake") String carMake, @Param("carModel") String carModel, @Param("color") String color);
 
 
