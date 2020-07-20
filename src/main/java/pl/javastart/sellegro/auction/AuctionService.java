@@ -1,5 +1,6 @@
 package pl.javastart.sellegro.auction;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.comparator.Comparators;
 
@@ -18,12 +19,15 @@ import java.util.stream.Collectors;
 @Service
 public class AuctionService {
 
+    AuctionRepository auctionRepository;
     private List<Auction> auctions;
 
     private static final String[] ADJECTIVES = {"Niesamowity", "Jedyny taki", "IGŁA", "HIT", "Jak nowy",
             "Perełka", "OKAZJA", "Wyjątkowy"};
 
-    public AuctionService() {
+    @Autowired
+    public AuctionService(AuctionRepository auctionRepository) {
+        this.auctionRepository = auctionRepository;
         try {
             loadData();
         } catch (IOException e) {
@@ -61,28 +65,48 @@ public class AuctionService {
     }
 
     public List<Auction> findAllForFilters(AuctionFilters auctionFilters) {
-        return auctions.stream()
-                .filter(auction -> auctionFilters.getTitle() == null || auction.getTitle().toUpperCase().contains(auctionFilters.getTitle().toUpperCase()))
-                .filter(auction -> auctionFilters.getCarMaker() == null || auction.getCarMake().toUpperCase().contains(auctionFilters.getCarMaker().toUpperCase()))
-                .filter(auction -> auctionFilters.getCarModel() == null || auction.getCarModel().toUpperCase().contains(auctionFilters.getCarModel().toUpperCase()))
-                .filter(auction -> auctionFilters.getColor() == null || auction.getColor().toUpperCase().contains(auctionFilters.getColor().toUpperCase()))
-                .collect(Collectors.toList());
+        if (auctionFilters.getTitle() != null) {
+            return auctionRepository.findAllByTitleContainingIgnoreCase(auctionFilters.getTitle());
+        }
+        else if (auctionFilters.getCarMaker() != null){
+            return auctionRepository.findAllByCarMakeContainingIgnoreCase(auctionFilters.getCarMaker());
+        }
+        else if (auctionFilters.getCarModel()!=null){
+            return auctionRepository.findAllByCarModelContainingIgnoreCase(auctionFilters.getCarModel());
+        }
+        else if (auctionFilters.getColor()!=null)
+        {
+            return auctionRepository.findAllByColorContainingIgnoreCase(auctionFilters.getColor());
+        }
+        else{
+            return auctionRepository.findAllBy();
+        }
+//        return auctions.stream()
+//                .filter(auction -> auctionFilters.getTitle() == null || auction.getTitle().toUpperCase().contains(auctionFilters.getTitle().toUpperCase()))
+//                .filter(auction -> auctionFilters.getCarMaker() == null || auction.getCarMake().toUpperCase().contains(auctionFilters.getCarMaker().toUpperCase()))
+//                .filter(auction -> auctionFilters.getCarModel() == null || auction.getCarModel().toUpperCase().contains(auctionFilters.getCarModel().toUpperCase()))
+//                .filter(auction -> auctionFilters.getColor() == null || auction.getColor().toUpperCase().contains(auctionFilters.getColor().toUpperCase()))
+//                .collect(Collectors.toList());
     }
 
     public List<Auction> findAllSorted(String sort) {
         Comparator<Auction> comparator;
         if (sort.equals("title")) {
-            comparator = Comparator.comparing(Auction::getTitle);
+            return auctionRepository.findAllByOrderByTitle();
+//            comparator = Comparator.comparing(Auction::getTitle);
         } else if (sort.equals("price")) {
-            comparator = Comparator.comparing(Auction::getPrice);
+            return auctionRepository.findAllByOrderByPriceAsc();
+//            comparator = Comparator.comparing(Auction::getPrice);
         } else if (sort.equals("color")) {
-            comparator = Comparator.comparing(Auction::getColor);
+            return auctionRepository.findAllByOrderByColor();
+//            comparator = Comparator.comparing(Auction::getColor);
         } else {
-            comparator = Comparator.comparing(Auction::getEndDate);
+            return auctionRepository.findAllByOrderByEndDateDesc();
+//            comparator = Comparator.comparing(Auction::getEndDate);
         }
 
-        return auctions.stream()
-                .sorted(comparator)
-                .collect(Collectors.toList());
+//        return auctions.stream()
+//                .sorted(comparator)
+//                .collect(Collectors.toList());
     }
 }
