@@ -1,19 +1,9 @@
 package pl.javastart.sellegro.auction;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
-import java.awt.print.Book;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,31 +16,19 @@ public class AuctionService {
             "Perełka", "OKAZJA", "Wyjątkowy"};
     List<Auction> auctions = new ArrayList<>();
 
+    @Autowired
     public AuctionService(AuctionRepository auctionRepository) {
         this.auctionRepository = auctionRepository;
-        try {
-            loadData();
-        } catch (IOException e) {
-            System.out.println("Error loading data: " + e.getMessage());
-            e.printStackTrace();
-        }
+        updateTitles();
     }
 
-    private void loadData() throws IOException {
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        InputStream is = classloader.getResourceAsStream("dane.csv");
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
-        Random random = new Random();
-        String line = bufferedReader.readLine(); // skip first line
-        while ((line = bufferedReader.readLine()) != null) {
-            String[] data = line.split(",");
-            long id = Long.parseLong(data[0]);
-            String randomAdjective = ADJECTIVES[random.nextInt(ADJECTIVES.length)];
-            String title = randomAdjective + " " + data[1] + " " + data[2];
-            BigDecimal price = new BigDecimal(data[4].replace("\\.", ","));
-            LocalDate endDate = LocalDate.parse(data[5]);
-            Auction auction = new Auction(id, title, data[1], data[2], data[3], price, endDate);
-            auctions.add(auction);
+    private void updateTitles() {
+        List<Auction> all = auctionRepository.findAll();
+        for (Auction auction: all){
+            Random random = new Random();
+            String adjective = ADJECTIVES[random.nextInt(ADJECTIVES.length)];
+            String title = String.format("%s %s $s", adjective, auction.getCarMake(), auction.getCarModel());
+            auction.setTitle(title);
             auctionRepository.save(auction);
         }
     }
@@ -59,36 +37,16 @@ public class AuctionService {
         return auctionRepository.findTop4ByOrderByPriceDesc();
     }
 
-    public List<Auction> findAllForFilters(AuctionFilters auctionFilters, String sort) {
-        if (auctionFilters==null){
-           return findAllSorted(sort);
-        }
-        else if (!StringUtils.isEmpty(auctionFilters.getTitle())) {
-            return auctionRepository.findAllByTitleContainingIgnoreCase(auctionFilters.getTitle(), sort);
-        } else if (!StringUtils.isEmpty(auctionFilters.getCarMaker())) {
-            return auctionRepository.findAllByCarMakeContainingIgnoreCase(auctionFilters.getCarMaker(), sort);
-        } else if (!StringUtils.isEmpty(auctionFilters.getCarModel())) {
-            return auctionRepository.findAllByCarModelContainingIgnoreCase(auctionFilters.getCarModel(), sort);
-        } else if (!StringUtils.isEmpty(auctionFilters.getColor())) {
-            return auctionRepository.findAllByColorContainingIgnoreCase(auctionFilters.getColor(), sort);
-        } else {
-            return auctionRepository.findAllBy();
-        }
+    public List<Auction> findAllForFiltersWithSort(AuctionFilters auctionFilters, String sortBy) {
+        Sort by = Sort.by(sortBy);
+        return auctionRepository.findAllByTitleContainsIgnoreCaseAndCarMakeContainsIgnoreCaseAndCarModelContainsIgnoreCaseAndColorContainsIgnoreCase(auctionFilters.getTitle(), auctionFilters.getCarMaker(), auctionFilters.getCarModel(), auctionFilters.getColor(), by);
     }
 
-    public List<Auction> findAllSorted(String sort) {
-        if (sort.equals("title")) {
-            return auctionRepository.findAllByOrderByTitle();
-        } else if (sort.equals("price")) {
-            return auctionRepository.findAllByOrderByPriceAsc();
-        } else if (sort.equals("color")) {
-            return auctionRepository.findAllByOrderByColor();
-        } else {
-            return auctionRepository.findAllByOrderByEndDate();
-        }
+    public List<Auction> findAllForFiltersWithoutSort(AuctionFilters auctionFilters) {
+        return auctionRepository.findAllByTitleContainsIgnoreCaseAndCarMakeContainsIgnoreCaseAndCarModelContainsIgnoreCaseAndColorContainsIgnoreCase(auctionFilters.getTitle(), auctionFilters.getCarMaker(), auctionFilters.getCarModel(), auctionFilters.getColor());
     }
 
-    public Page<Auction> findPaginated(Pageable pageable) {
+    public Page<Auction> findPaginated(Pageable pageable, List <Auction> auctions) {
         int pageSize = pageable.getPageSize();
         int currentPage = pageable.getPageNumber();
         int startItem = currentPage * pageSize;

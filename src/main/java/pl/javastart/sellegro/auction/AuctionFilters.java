@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 public class AuctionFilters {
 
-    private String title;
-    private String carMaker;
-    private String carModel;
-    private String color;
+    private String title="";
+    private String carMaker="";
+    private String carModel="";
+    private String color="";
 }
